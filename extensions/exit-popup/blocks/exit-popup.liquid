@@ -1,0 +1,44 @@
+{% schema %}
+{
+  "name": "Exit Intent Popup",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "popup_title",
+      "label": "Popup Title",
+      "default": "Wait! Don't Leave!"
+    },
+    {
+      "type": "textarea",
+      "id": "popup_message",
+      "label": "Popup Message",
+      "default": "Get 10% off your first purchase when you sign up for our newsletter!"
+    },
+    {
+      "type": "color",
+      "id": "popup_background",
+      "label": "Background Color",
+      "default": "#ffffff"
+    }
+  ]
+}
+{% endschema %}
+
+<div id="exit-popup-container">
+  <div class="exit-popup" style="display: none; justify-content: center; align-items: center;">
+    <div class="exit-popup__content" style="background-color: {{ block.settings.popup_background }};">
+      <button type="button" class="exit-popup__close" aria-label="Close popup">&times;</button>
+      <h2>{{ block.settings.popup_title }}</h2>
+      <p>{{ block.settings.popup_message }}</p>
+
+      <form class="exit-popup__form">
+        <input type="email" placeholder="Enter your email" required>
+        <button type="submit">Subscribe</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="{{ 'exit-popup.js' | asset_url }}" defer></script>
+<link rel="stylesheet" href="{{ 'exit-popup.css' | asset_url }}">
