@@ -1,3 +1,4 @@
+/* Exit Popup Styles */
 .exit-popup-overlay {
   position: fixed;
   top: 0;
@@ -29,58 +30,3 @@
 
 .popup-close {
   position: absolute;
-  top: 15px;
-  right: 15px;
-  background: none;
-  border: none;
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 5px;
-  z-index: 1000000; /* Ensure it's above the popup content */
-  color: #333;
-}
-
-.popup-template h2 {
-  margin: 0 0 15px;
-  font-size: 24px;
-  color: #333;
-}
-
-.popup-template p {
-  margin-bottom: 20px;
-  color: #666;
-}
-
-.popup-template input[type="email"],
-.popup-template select {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
-}
-
-.pop-button {
-  width: 100%;
-  padding: 12px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.3s;
-}
-
-.button:hover {
-  background-color: #45a049;
-}
-/* Mobile Responsiveness */
-@media (max-width: 480px) {
-  .exit-popup__content {
-    width: 95%;
-    padding: 1.5rem;
-  }
-}

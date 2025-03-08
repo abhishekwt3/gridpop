@@ -1,10 +1,11 @@
 {% schema %}
 {
-"name": "Exit Intent Popup",
-"target": "section",
-"settings": []
+  "name": "Exit Intent Popup",
+  "target": "section",
+  "settings": []
 }
 {% endschema %}
+
 {% assign popup_settings = shop.metafields.exitPopup.settings %}
 {% if popup_settings == blank %}
   <div class="popup-error">
@@ -14,30 +15,77 @@
   {% assign extracted_value = popup_settings | split: '"popupTemplate":"' | last | split: '"' | first %}
   {% assign popup_frequency = popup_settings | split: '"popupFrequency":"' | last | split: '"' | first %}
   {% assign popup_frequency_number = popup_frequency | times: 1 | default: 2 %}
-
-  <div id="exit-popup-overlay" class="exit-popup-overlay">
-    <div class="exit-popup-container">
-      {% case extracted_value %}
-        {% when "discount" %}
-          {% render 'discount' ignore_missing: true %}
-        {% when "newsletter" %}
-          {% render 'newsletter' ignore_missing: true %}
-        {% when "survey" %}
-          {% render 'survey' ignore_missing: true %}
-        {% else %}
-          <div class="popup-template">
-            <button type="pop-button" class="popup-close">&times;</button>
-            <h2>Welcome!</h2>
-            <p>Thank you for visiting our store.</p>
-          </div>
-      {% endcase %}
+  
+  {% assign display_type = popup_settings | split: '"displayType":"' | last | split: '"' | first | default: "popup" %}
+  {% assign timer_duration = popup_settings | split: '"timerDuration":"' | last | split: '"' | first | default: "15" %}
+  {% assign background_color = popup_settings | split: '"backgroundColor":"' | last | split: '"' | first | default: "#ffffff" %}
+  {% assign text_color = popup_settings | split: '"textColor":"' | last | split: '"' | first | default: "#333333" %}
+  {% assign button_color = popup_settings | split: '"buttonColor":"' | last | split: '"' | first | default: "#4CAF50" %}
+  
+  {% if display_type == "popup" %}
+    <!-- Exit Popup -->
+    <div id="exit-popup-overlay" class="exit-popup-overlay">
+      <div class="exit-popup-container">
+        {% case extracted_value %}
+          {% when "discount" %}
+            {% render 'discount' ignore_missing: true %}
+          {% when "newsletter" %}
+            {% render 'newsletter' ignore_missing: true %}
+          {% when "survey" %}
+            {% render 'survey' ignore_missing: true %}
+          {% else %}
+            <div class="popup-template" style="background-color: {{ background_color }}; color: {{ text_color }};">
+              <button type="button" class="popup-close">&times;</button>
+              <h2>Welcome!</h2>
+              <p>Thank you for visiting our store.</p>
+            </div>
+        {% endcase %}
+      </div>
     </div>
-  </div>
+  {% else %}
+    <!-- Discount Bar -->
+    <div id="discount-bar" class="discount-bar" style="display: none; background-color: {{ background_color }}; color: {{ text_color }};">
+      <div class="discount-bar__content">
+        <div class="discount-bar__timer">
+          <span id="discount-timer">{{ timer_duration }}:00</span>
+        </div>
+        <div class="discount-bar__message">
+          {% case extracted_value %}
+            {% when "discount" %}
+              Limited time offer: 10% off your order!
+            {% when "newsletter" %}
+              Subscribe now for exclusive deals!
+            {% when "survey" %}
+              Take our quick survey before you go!
+            {% else %}
+              Special offer for you!
+          {% endcase %}
+        </div>
+        <button type="button" class="discount-bar__button" style="background-color: {{ button_color }};">
+          {% case extracted_value %}
+            {% when "discount" %}
+              Get Discount
+            {% when "newsletter" %}
+              Subscribe
+            {% when "survey" %}
+              Take Survey
+            {% else %}
+              Learn More
+          {% endcase %}
+        </button>
+        <button type="button" class="discount-bar__close">&times;</button>
+      </div>
+    </div>
+  {% endif %}
+  
   <script>
     window.exitIntentConfig = {
-      popupFrequency: {{ popup_frequency_number }}
+      popupFrequency: {{ popup_frequency_number }},
+      displayType: "{{ display_type }}",
+      timerDuration: {{ timer_duration | times: 60 }} // Convert to seconds
     };
   </script>
 {% endif %}
+
 <script src="{{ 'exit-popup.js' | asset_url }}" defer></script>
 <link rel="stylesheet" href="{{ 'exit-popup.css' | asset_url }}">

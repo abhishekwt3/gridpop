@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "6dfcfbf103db17e0b1a4ca86c492e854"
-application_url = "https://wx-promised-converted-merchant.trycloudflare.com"
+application_url = "https://accused-talk-valley-graphs.trycloudflare.com"
 embedded = true
 name = "gridpop"
 handle = "gridpop"
@@ -23,9 +23,9 @@ scopes = "write_products, read_products, read_metaobjects, write_metaobjects, wr
 
 [auth]
 redirect_urls = [
-  "https://wx-promised-converted-merchant.trycloudflare.com/auth/callback",
-  "https://wx-promised-converted-merchant.trycloudflare.com/auth/shopify/callback",
-  "https://wx-promised-converted-merchant.trycloudflare.com/api/auth/callback"
+  "https://accused-talk-valley-graphs.trycloudflare.com/auth/callback",
+  "https://accused-talk-valley-graphs.trycloudflare.com/auth/shopify/callback",
+  "https://accused-talk-valley-graphs.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]
