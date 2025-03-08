@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "6dfcfbf103db17e0b1a4ca86c492e854"
-application_url = "https://vietnam-fiber-restricted-climbing.trycloudflare.com"
+application_url = "https://wx-promised-converted-merchant.trycloudflare.com"
 embedded = true
 name = "gridpop"
 handle = "gridpop"
@@ -19,13 +19,13 @@ api_version = "2025-01"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+scopes = "write_products, read_products, read_metaobjects, write_metaobjects, write_metaobject_definitions, read_metaobject_definitions"
 
 [auth]
 redirect_urls = [
-  "https://vietnam-fiber-restricted-climbing.trycloudflare.com/auth/callback",
-  "https://vietnam-fiber-restricted-climbing.trycloudflare.com/auth/shopify/callback",
-  "https://vietnam-fiber-restricted-climbing.trycloudflare.com/api/auth/callback"
+  "https://wx-promised-converted-merchant.trycloudflare.com/auth/callback",
+  "https://wx-promised-converted-merchant.trycloudflare.com/auth/shopify/callback",
+  "https://wx-promised-converted-merchant.trycloudflare.com/api/auth/callback"
 ]
 
 [pos]

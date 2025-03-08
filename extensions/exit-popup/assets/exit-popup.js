@@ -1,81 +1,103 @@
-document.addEventListener("DOMContentLoaded", function () {
-  const popup = document.querySelector(".exit-popup");
-  const closeButton = document.querySelector(".exit-popup__close");
-  const form = document.querySelector(".exit-popup__form");
-  const emailInput = form ? form.querySelector("input[type='email']") : null;
+document.addEventListener("DOMContentLoaded", function() {
+  // Get DOM elements
+  const overlay = document.getElementById("exit-popup-overlay");
+  const closeButtons = document.querySelectorAll(".popup-close");
+  const forms = document.querySelectorAll(".popup-template form");
 
+  let popupShown = false;
   let triggerCount = 0;
-  const maxTriggers = 2;
+  const maxTriggers = window.exitIntentConfig?.popupFrequency || 2;
 
+  // Initialize from session storage
   try {
-    triggerCount = parseInt(sessionStorage.getItem("exitPopupCount")) || 0;
+      triggerCount = parseInt(sessionStorage.getItem("exitPopupCount")) || 0;
   } catch (error) {
-    console.warn("Session storage is not available:", error);
+      console.warn("Session storage error:", error);
   }
 
   function showPopup() {
-    if (!popup) return;
-    popup.style.display = "flex";
+      if (!overlay || popupShown || triggerCount >= maxTriggers) return;
 
-    try {
-      triggerCount++;
-      sessionStorage.setItem("exitPopupCount", triggerCount);
-    } catch (error) {
-      console.warn("Could not store session data:", error);
-    }
+      overlay.style.display = "flex";
+      popupShown = true;
+
+      try {
+          triggerCount++;
+          sessionStorage.setItem("exitPopupCount", triggerCount.toString());
+      } catch (error) {
+          console.warn("Session storage error:", error);
+      }
   }
 
   function hidePopup() {
-    if (!popup) return;
-    popup.style.display = "none";
+      if (!overlay) return;
+      overlay.style.display = "none";
+      popupShown = false;
   }
 
   function handleExitIntent(event) {
-    if (
-      event.clientY <= 0 || // Mouse leaves at top
-      (!event.relatedTarget && event.clientY < 10) // Mouseout with no relatedTarget (real exit)
-    ) {
-      if (triggerCount < maxTriggers) {
-        showPopup();
+      // Only trigger when mouse moves to top of window
+      if (event.clientY <= 0) {
+          showPopup();
+          if (triggerCount >= maxTriggers) {
+              cleanupListeners();
+          }
       }
-
-      if (triggerCount >= maxTriggers) {
-        document.removeEventListener("mouseout", handleExitIntent);
-        window.removeEventListener("blur", handleTabSwitch);
-      }
-    }
   }
 
-  function handleTabSwitch() {
-    if (triggerCount < maxTriggers) {
-      showPopup();
-    }
-  }
+  function handleSubmit(event) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      const endpoint = form.getAttribute('action');
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-    if (!emailInput || !emailInput.value) return;
-
-    try {
-      const response = await fetch("/apps/exit-intent/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailInput.value }),
+      fetch(endpoint, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(Object.fromEntries(formData))
+      })
+      .then(response => {
+          if (response.ok) {
+              hidePopup();
+              alert("Thank you for your submission!");
+          } else {
+              throw new Error('Submission failed');
+          }
+      })
+      .catch(error => {
+          console.error('Error:', error);
+          alert("Something went wrong. Please try again.");
       });
-
-      if (response.ok) {
-        alert("Thank you for subscribing!");
-        hidePopup();
-      } else {
-        alert("Subscription failed. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error submitting email:", error);
-    }
   }
 
-  document.addEventListener("mouseout", handleExitIntent); // Works better in Safari
-  window.addEventListener("blur", handleTabSwitch); // Detects tab switching
-  if (closeButton) closeButton.addEventListener("click", hidePopup);
-  if (form) form.addEventListener("submit", handleSubmit);
+  function cleanupListeners() {
+      document.removeEventListener("mouseout", handleExitIntent);
+  }
+
+  // Event Listeners
+  if (triggerCount < maxTriggers) {
+      document.addEventListener("mouseout", handleExitIntent);
+  }
+
+  // Close button listeners
+  closeButtons.forEach(button => {
+      button.addEventListener("click", (e) => {
+          e.preventDefault();
+          hidePopup();
+      });
+  });
+
+  // Overlay click to close
+  overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) {
+          hidePopup();
+      }
+  });
+
+  // Form submit listeners
+  forms.forEach(form => {
+      form.addEventListener("submit", handleSubmit);
+  });
 });

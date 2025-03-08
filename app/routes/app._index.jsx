@@ -1,5 +1,5 @@
 import { useLoaderData } from "@remix-run/react";
-import { Page, Layout, Text, Card } from "@shopify/polaris";
+import { Page, Layout, Text, Card, Button } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
@@ -30,10 +30,10 @@ export default function Index() {
   const status = data?.status || "unknown"; // Default fallback
 
   return (
-    <Page>
+    <Page title="Exit Intent Popup">
       <Layout>
         <Layout.Section>
-          <Card>
+          <Card sectioned>
             <Text as="h2" variant="headingMd">
               Exit Intent Popup Status: {status}
             </Text>
@@ -42,6 +42,9 @@ export default function Index() {
                 An error occurred while loading the app.
               </Text>
             )}
+            <Button primary url="/app/settings">
+              Go to Settings
+            </Button>
           </Card>
         </Layout.Section>
       </Layout>
