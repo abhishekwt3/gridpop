@@ -1,218 +1,252 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-export function PopupPreview({ template, displayType, timerDuration, bgColor, textColor, buttonColor }) {
-  // Default values if not provided
-  const background = bgColor || '#ffffff';
-  const text = textColor || '#333333';
-  const button = buttonColor || '#4CAF50';
-  const duration = timerDuration || 15;
+export function PopupPreview({
+  template = 'discount',
+  displayType = 'popup',
+  timerDuration = '15',
+  bgColor = '#ffffff',
+  textColor = '#333333',
+  buttonColor = '#4CAF50',
+  templateHeading,
+  templateSubtext,
+  templateButtonText
+}) {
+  const [email, setEmail] = useState('');
+  const [selectedOption, setSelectedOption] = useState('');
 
-  const getDiscountBar = () => {
-    return (
-      <div style={{ 
-        backgroundColor: background, 
-        color: text,
-        padding: '10px 20px', 
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        height: '60px',
-        width: 'fit-content',
-        maxWidth: '100%',
-        margin: '0 auto',
-        borderRadius: '4px',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ 
-            backgroundColor: '#f8d7da', 
-            color: '#721c24',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            fontSize: '14px',
-            fontWeight: 'bold'
-          }}>
-            {duration}:00
-          </div>
-          <span style={{ fontWeight: 'bold' }}>
-            {template === 'discount' ? 'Limited time offer: 10% off your order!' : 
-             template === 'newsletter' ? 'Subscribe now for exclusive deals!' : 
-             'Take our quick survey before you go!'}
-          </span>
-        </div>
-        <button style={{ 
-          backgroundColor: button, 
-          color: 'white',
-          border: 'none',
-          padding: '8px 15px',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          marginLeft: '15px',
-          whiteSpace: 'nowrap'
-        }}>
-          {template === 'discount' ? 'Get Discount' : 
-           template === 'newsletter' ? 'Subscribe' : 
-           'Take Survey'}
-        </button>
-      </div>
-    );
+  // For demonstration purposes, show a timer
+  const [timeRemaining] = useState(`${timerDuration}:00`);
+
+  // Default texts if not provided
+  const heading = templateHeading || (
+    template === 'discount' ? 'Special Offer!' :
+    template === 'newsletter' ? 'Stay Updated!' :
+    'Quick Survey'
+  );
+
+  const subtext = templateSubtext || (
+    template === 'discount' ? 'Get 10% off your first purchase' :
+    template === 'newsletter' ? 'Subscribe to our newsletter for exclusive updates' :
+    'Help us improve your experience'
+  );
+
+  const buttonText = templateButtonText || (
+    template === 'discount' ? 'Get Discount' :
+    template === 'newsletter' ? 'Subscribe' :
+    'Submit'
+  );
+
+  // Handle input changes
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
   };
 
-  const getTemplateContent = () => {
-    switch (template) {
+  const handleSelectChange = (e) => {
+    setSelectedOption(e.target.value);
+  };
+
+  // Get appropriate template content
+  const getTemplateFields = () => {
+    switch(template) {
       case 'discount':
-        return (
-          <div style={{ backgroundColor: '#fffae6', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>
-            <h2 style={{ color: '#ff6600', margin: '0 0 15px' }}>Exclusive Discount!</h2>
-            <p style={{ margin: '0 0 20px' }}>Get 10% off your first purchase when you sign up!</p>
-            <div style={{ marginBottom: '15px' }}>
-              <input 
-                type="email" 
-                placeholder="Enter your email" 
-                style={{ 
-                  width: '100%', 
-                  padding: '12px', 
-                  border: '1px solid #ddd', 
-                  borderRadius: '4px',
-                  marginBottom: '10px'
-                }} 
-              />
-              <button 
-                style={{ 
-                  width: '100%', 
-                  padding: '12px', 
-                  backgroundColor: button, 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '4px', 
-                  cursor: 'pointer' 
-                }}
-              >
-                Get My Discount
-              </button>
-            </div>
-          </div>
-        );
-      
+        return {
+          inputType: 'email',
+          inputPlaceholder: 'Enter your email',
+          showSelect: false
+        };
       case 'newsletter':
-        return (
-          <div style={{ backgroundColor: '#f3f4f6', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>
-            <h2 style={{ color: '#0066cc', margin: '0 0 15px' }}>Join Our Newsletter</h2>
-            <p style={{ margin: '0 0 20px' }}>Stay updated with our latest offers and news.</p>
-            <div style={{ marginBottom: '15px' }}>
-              <input 
-                type="email" 
-                placeholder="Enter your email" 
-                style={{ 
-                  width: '100%', 
-                  padding: '12px', 
-                  border: '1px solid #ddd', 
-                  borderRadius: '4px',
-                  marginBottom: '10px'
-                }} 
-              />
-              <button 
-                style={{ 
-                  width: '100%', 
-                  padding: '12px', 
-                  backgroundColor: button, 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '4px', 
-                  cursor: 'pointer' 
-                }}
-              >
-                Subscribe
-              </button>
-            </div>
-          </div>
-        );
-      
+        return {
+          inputType: 'email',
+          inputPlaceholder: 'Enter your email',
+          showSelect: false
+        };
       case 'survey':
-        return (
-          <div style={{ backgroundColor: '#fff3e6', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>
-            <h2 style={{ color: '#cc3300', margin: '0 0 15px' }}>We Value Your Feedback</h2>
-            <p style={{ margin: '0 0 20px' }}>How would you rate your experience with us?</p>
-            <div style={{ marginBottom: '15px' }}>
-              <select 
-                style={{ 
-                  width: '100%', 
-                  padding: '12px', 
-                  border: '1px solid #ddd', 
-                  borderRadius: '4px',
-                  marginBottom: '10px'
-                }}
-              >
-                <option value="">Select an option</option>
-                <option value="5">5 - Excellent</option>
-                <option value="4">4 - Good</option>
-                <option value="3">3 - Average</option>
-                <option value="2">2 - Below Average</option>
-                <option value="1">1 - Poor</option>
-              </select>
-              <button 
-                style={{ 
-                  width: '100%', 
-                  padding: '12px', 
-                  backgroundColor: button, 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '4px', 
-                  cursor: 'pointer' 
-                }}
-              >
-                Submit Feedback
-              </button>
-            </div>
-          </div>
-        );
-      
+        return {
+          inputType: 'select',
+          inputPlaceholder: 'Select an option',
+          showSelect: true
+        };
       default:
-        return (
-          <div style={{ backgroundColor: '#f9f9f9', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>
-            <h2 style={{ margin: '0 0 15px' }}>Welcome!</h2>
-            <p style={{ margin: '0 0 20px' }}>Thank you for visiting our store.</p>
-          </div>
-        );
+        return {
+          inputType: 'email',
+          inputPlaceholder: 'Enter your email',
+          showSelect: false
+        };
     }
   };
 
-  if (displayType === 'discount-bar') {
+  const templateFields = getTemplateFields();
+
+  // Styles for popup
+  const popupStyles = {
+    container: {
+      position: 'relative',
+      maxWidth: '100%',
+      border: '1px solid #ddd',
+      borderRadius: '8px',
+      overflow: 'hidden',
+      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    },
+    popup: {
+      backgroundColor: bgColor,
+      padding: '25px',
+      color: textColor,
+      textAlign: 'center',
+      position: 'relative'
+    },
+    closeButton: {
+      position: 'absolute',
+      top: '10px',
+      right: '10px',
+      background: 'none',
+      border: 'none',
+      fontSize: '20px',
+      cursor: 'pointer',
+      color: textColor
+    },
+    heading: {
+      fontSize: '22px',
+      fontWeight: 'bold',
+      margin: '0 0 15px 0',
+      color: textColor
+    },
+    subtext: {
+      fontSize: '16px',
+      margin: '0 0 20px 0',
+      color: textColor
+    },
+    form: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '15px'
+    },
+    input: {
+      padding: '10px',
+      borderRadius: '4px',
+      border: '1px solid #ddd',
+      fontSize: '14px'
+    },
+    button: {
+      padding: '10px 15px',
+      borderRadius: '4px',
+      border: 'none',
+      backgroundColor: buttonColor,
+      color: '#ffffff',
+      fontSize: '14px',
+      fontWeight: 'bold',
+      cursor: 'pointer'
+    },
+    select: {
+      padding: '10px',
+      borderRadius: '4px',
+      border: '1px solid #ddd',
+      fontSize: '14px',
+      width: '100%'
+    }
+  };
+
+  // Styles for discount bar
+  const discountBarStyles = {
+    container: {
+      position: 'relative',
+      width: '100%',
+      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    },
+    bar: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: bgColor,
+      padding: '12px 20px',
+      color: textColor,
+      borderBottom: '1px solid #ddd'
+    },
+    content: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '15px'
+    },
+    message: {
+      margin: 0,
+      fontSize: '15px',
+      fontWeight: 'medium'
+    },
+    timer: {
+      fontSize: '15px',
+      fontWeight: 'bold',
+      color: buttonColor
+    },
+    button: {
+      padding: '8px 15px',
+      borderRadius: '4px',
+      border: 'none',
+      backgroundColor: buttonColor,
+      color: '#ffffff',
+      fontSize: '14px',
+      fontWeight: 'bold',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap'
+    },
+    closeButton: {
+      background: 'none',
+      border: 'none',
+      fontSize: '18px',
+      cursor: 'pointer',
+      color: textColor,
+      padding: '0 0 0 15px'
+    }
+  };
+
+  // Render the appropriate component based on display type
+  if (displayType === 'popup') {
     return (
-      <div style={{ marginTop: '20px' }}>
-        {getDiscountBar()}
+      <div style={popupStyles.container}>
+        <div style={popupStyles.popup}>
+          <button style={popupStyles.closeButton} aria-label="Close">&times;</button>
+          <h2 style={popupStyles.heading}>{heading}</h2>
+          <p style={popupStyles.subtext}>{subtext}</p>
+
+          <div style={popupStyles.form}>
+            {templateFields.showSelect ? (
+              <select
+                style={popupStyles.select}
+                value={selectedOption}
+                onChange={handleSelectChange}
+              >
+                <option value="">Select an option</option>
+                <option value="very_satisfied">Very Satisfied</option>
+                <option value="satisfied">Satisfied</option>
+                <option value="neutral">Neutral</option>
+                <option value="unsatisfied">Unsatisfied</option>
+              </select>
+            ) : (
+              <input
+                type={templateFields.inputType}
+                placeholder={templateFields.inputPlaceholder}
+                style={popupStyles.input}
+                value={email}
+                onChange={handleEmailChange}
+              />
+            )}
+            <button style={popupStyles.button}>{buttonText}</button>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // Discount Bar Display
   return (
-    <div style={{ 
-      position: 'relative', 
-      border: '1px solid #ddd', 
-      borderRadius: '8px', 
-      overflow: 'hidden',
-      marginTop: '20px',
-      backgroundColor: background
-    }}>
-      <div style={{ 
-        position: 'absolute', 
-        top: '10px', 
-        right: '10px', 
-        fontSize: '20px', 
-        lineHeight: 1, 
-        cursor: 'pointer',
-        zIndex: 2,
-        width: '24px',
-        height: '24px',
-        textAlign: 'center',
-        backgroundColor: 'white',
-        borderRadius: '50%',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-      }}>
-        &times;
-      </div>
-      <div style={{ padding: '20px' }}>
-        {getTemplateContent()}
+    <div style={discountBarStyles.container}>
+      <div style={discountBarStyles.bar}>
+        <div style={discountBarStyles.content}>
+          <p style={discountBarStyles.message}>{subtext}</p>
+          <span style={discountBarStyles.timer}>Time remaining: {timeRemaining}</span>
+        </div>
+        <div style={{display: 'flex', alignItems: 'center'}}>
+          <button style={discountBarStyles.button}>{buttonText}</button>
+          <button style={discountBarStyles.closeButton} aria-label="Close">&times;</button>
+        </div>
       </div>
     </div>
   );

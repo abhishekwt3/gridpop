@@ -1,9 +1,84 @@
-<div class="popup-template popup-template--discount">
+<style>
+  .exit-popup--discount {
+    background-color: {{ background_color | default: "#fffae6" }};
+    text-align: center;
+    padding: 30px;
+    border-radius: 8px;
+    color: {{ text_color | default: "#333333" }};
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    width: 100%;
+  }
+
+  .exit-popup--discount h2 {
+    margin: 0 0 15px;
+    font-size: 24px;
+    color: {{ text_color | default: "#333333" }};
+  }
+
+  .exit-popup--discount p {
+    margin-bottom: 20px;
+    color: {{ text_color | default: "#333333" }};
+  }
+
+  .exit-popup--discount img {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 15px;
+  }
+
+  .exit-popup--discount .exit-popup__form {
+    width: 100%;
+  }
+
+  .exit-popup--discount .exit-popup__form input[type="email"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+
+  .exit-popup--discount button:not(.popup-close) {
+    width: 100%;
+    padding: 12px;
+    background-color: {{ button_color | default: "#4CAF50" }};
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: opacity 0.3s;
+  }
+
+  .exit-popup--discount button:not(.popup-close):hover {
+    opacity: 0.9;
+  }
+</style>
+
+<div class="exit-popup--discount">
   <button type="button" class="popup-close">&times;</button>
-  <h2>Special Offer!</h2>
-  <p>Get 10% off your first purchase</p>
-  <form class="discount-form" action="/discount" method="POST">
-    <input type="email" name="email" placeholder="Enter your email" required>
-    <button type="submit" class="pop-button">Get Discount</button>
+  {% if heading %}
+    <h2>{{ heading }}</h2>
+  {% else %}
+    <h2>Exclusive Discount!</h2>
+  {% endif %}
+
+  {% if subtext %}
+    <p>{{ subtext }}</p>
+  {% else %}
+    <p>Get 10% off your first purchase when you sign up!</p>
+  {% endif %}
+
+  <form class="exit-popup__form">
+    <input type="email" placeholder="Enter your email" required>
+    <button type="submit">
+      {% if button_text %}
+        {{ button_text }}
+      {% else %}
+        Get Discount
+      {% endif %}
+    </button>
   </form>
 </div>

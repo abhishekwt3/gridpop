@@ -1,9 +1,78 @@
-<div class="popup-template popup-template--newsletter">
+<style>
+  .exit-popup--newsletter {
+    background-color: {{ background_color | default: "#f3f4f6" }};
+    text-align: center;
+    padding: 30px;
+    border-radius: 8px;
+    color: {{ text_color | default: "#333333" }};
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    width: 100%;
+  }
+
+  .exit-popup--newsletter h2 {
+    margin: 0 0 15px;
+    font-size: 24px;
+    color: {{ text_color | default: "#333333" }};
+  }
+
+  .exit-popup--newsletter p {
+    margin-bottom: 20px;
+    color: {{ text_color | default: "#333333" }};
+  }
+
+  .exit-popup--newsletter .exit-popup__form {
+    width: 100%;
+  }
+
+  .exit-popup--newsletter .exit-popup__form input[type="email"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+
+  .exit-popup--newsletter button:not(.popup-close) {
+    width: 100%;
+    padding: 12px;
+    background-color: {{ button_color | default: "#4CAF50" }};
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: opacity 0.3s;
+  }
+
+  .exit-popup--newsletter button:not(.popup-close):hover {
+    opacity: 0.9;
+  }
+</style>
+
+<div class="exit-popup--newsletter">
   <button type="button" class="popup-close">&times;</button>
-  <h2>Stay Updated!</h2>
-  <p>Subscribe to our newsletter for exclusive updates</p>
-  <form class="newsletter-form" action="/newsletter" method="POST">
-    <input type="email" name="email" placeholder="Enter your email" required>
-    <button type="submit" class="pop-button">Subscribe</button>
+  {% if heading %}
+    <h2>{{ heading }}</h2>
+  {% else %}
+    <h2>Join Our Newsletter</h2>
+  {% endif %}
+
+  {% if subtext %}
+    <p>{{ subtext }}</p>
+  {% else %}
+    <p>Stay updated with our latest offers and news.</p>
+  {% endif %}
+
+  <form class="exit-popup__form">
+    <input type="email" placeholder="Enter your email" required>
+    <button type="submit">
+      {% if button_text %}
+        {{ button_text }}
+      {% else %}
+        Subscribe
+      {% endif %}
+    </button>
   </form>
 </div>

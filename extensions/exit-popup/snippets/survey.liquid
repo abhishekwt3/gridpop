@@ -1,14 +1,63 @@
-<div class="popup-template popup-template--survey">
+<style>
+  .exit-popup--survey {
+    background-color: {{ background_color | default: "#fff3e6" }};
+    text-align: center;
+    padding: 30px;
+    border-radius: 8px;
+    color: {{ text_color | default: "#333333" }};
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    width: 100%;
+  }
+
+  .exit-popup--survey h2 {
+    margin: 0 0 15px;
+    font-size: 24px;
+    color: {{ text_color | default: "#333333" }};
+  }
+
+  .exit-popup--survey p {
+    margin-bottom: 20px;
+    color: {{ text_color | default: "#333333" }};
+  }
+
+  .exit-popup--survey button:not(.popup-close) {
+    padding: 12px 24px;
+    background-color: {{ button_color | default: "#4CAF50" }};
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: opacity 0.3s;
+    display: inline-block;
+    min-width: 200px;
+  }
+
+  .exit-popup--survey button:not(.popup-close):hover {
+    opacity: 0.9;
+  }
+</style>
+
+<div class="exit-popup--survey">
   <button type="button" class="popup-close">&times;</button>
-  <h2>Quick Survey</h2>
-  <p>Help us improve your experience</p>
-  <form class="survey-form" action="/survey" method="POST">
-    <select name="feedback" required>
-      <option value="">How did you find us?</option>
-      <option value="social">Social Media</option>
-      <option value="search">Search Engine</option>
-      <option value="friend">Friend Recommendation</option>
-    </select>
-    <button type="submit" class="pop-button">Submit</button>
-  </form>
+  {% if heading %}
+    <h2>{{ heading }}</h2>
+  {% else %}
+    <h2>We Value Your Feedback</h2>
+  {% endif %}
+
+  {% if subtext %}
+    <p>{{ subtext }}</p>
+  {% else %}
+    <p>Take a quick survey and help us improve.</p>
+  {% endif %}
+
+  <button onclick="window.location.href='/survey'">
+    {% if button_text %}
+      {{ button_text }}
+    {% else %}
+      Take Survey
+    {% endif %}
+  </button>
 </div>
