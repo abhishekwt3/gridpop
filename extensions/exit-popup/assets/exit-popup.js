@@ -1,41 +1,24 @@
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("🔍 Exit Popup Script Starting...");
+  console.log("🔍 Exit Intent Discount Bar Script Starting...");
 
-  // Get configuration from window object - DO NOT provide defaults here
-  // All defaults should be handled in the Liquid template
+  // Get configuration from window object
   if (!window.exitIntentConfig) {
-    console.error("Exit popup configuration not found!");
+    console.error("Exit intent configuration not found!");
     return;
   }
 
   const config = window.exitIntentConfig;
-  console.log("🛠️ Debug: Using config from Liquid:", config);
+  console.log("🛠️ Configuration loaded:", config);
 
   // Get DOM elements
-  const popup = document.getElementById("exit-popup-overlay");
   const discountBar = document.getElementById("discount-bar");
-  const closeButtons = document.querySelectorAll(".popup-close, .discount-bar__close");
+  const closeButtons = document.querySelectorAll(".discount-bar__close");
   const timerElement = document.getElementById("discount-timer");
+  const discountCodeElement = document.getElementById('discount-code');
+  const copyButton = document.getElementById('copy-discount-button');
 
   // Check for required elements
-  if (!popup && config.displayType === "popup") {
-    console.warn("Exit popup overlay element not found. Will check again shortly...");
-
-    // Try again after a short delay (elements might be loading)
-    setTimeout(() => {
-      const retryPopup = document.getElementById("exit-popup-overlay");
-      if (retryPopup) {
-        console.log("Popup element found on retry!");
-        initExitIntent(retryPopup, null);
-      } else {
-        console.error("Exit popup overlay element not found after retry!");
-      }
-    }, 1000);
-
-    return;
-  }
-
-  if (!discountBar && config.displayType === "discount-bar") {
+  if (!discountBar) {
     console.warn("Discount bar element not found. Will check again shortly...");
 
     // Try again after a short delay
@@ -43,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const retryBar = document.getElementById("discount-bar");
       if (retryBar) {
         console.log("Discount bar element found on retry!");
-        initExitIntent(null, retryBar);
+        initExitIntent(retryBar);
       } else {
         console.error("Discount bar element not found after retry!");
       }
@@ -52,23 +35,61 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
+  console.log("DOM elements found:", { 
+    discountBar: !!discountBar, 
+    timerElement: !!timerElement,
+    discountCodeElement: !!discountCodeElement,
+    copyButton: !!copyButton
+  });
+
   // Initialize with found elements
-  initExitIntent(popup, discountBar);
+  initExitIntent(discountBar);
 
-  // Main initialization function
-  function initExitIntent(popupElement, discountBarElement) {
-    // Determine which element to use based on display type
-    const activeElement = config.displayType === "popup" ? popupElement : discountBarElement;
+  // Debug helper function
+  function debugMetafields() {
+    console.group("Debugging Metafields and Configuration");
+    console.log("Window exitIntentConfig:", window.exitIntentConfig);
+    
+    // Show values in DOM
+    console.log("DOM Values:");
+    if (discountCodeElement) console.log("Discount code text:", discountCodeElement.textContent);
+    if (timerElement) console.log("Timer display:", timerElement.textContent);
+    
+    // Analyze config
+    const configKeys = Object.keys(config || {});
+    console.log("Config keys:", configKeys);
+    
+    if (config) {
+      console.log("popupFrequency:", config.popupFrequency, typeof config.popupFrequency);
+      console.log("timerDuration:", config.timerDuration, typeof config.timerDuration);
+      console.log("discountCode:", config.discountCode);
+      console.log("offerText:", config.offerText);
+      console.log("buttonText:", config.buttonText);
+      console.log("scrollDetection:", config.scrollDetection);
+      console.log("barPosition:", config.barPosition);
+    }
+    
+    console.groupEnd();
+  }
+    
+  // Run debug on initialization
+  debugMetafields();
 
-    if (!activeElement) {
-      console.error(`Active element (${config.displayType}) not found!`);
+  function initExitIntent(discountBarElement) {
+    if (!discountBarElement) {
+      console.error("Discount bar element not found!");
       return;
     }
 
-    let popupShown = false;
+    let barShown = false;
     let triggerCount = 0;
     let timerInterval = null;
     const maxTriggers = parseInt(config.popupFrequency) || 1; // Default to 1 if not specified
+    const scrollDetectionEnabled = config.scrollDetection !== false; // Default to true if not specified
+    const barPosition = config.barPosition || "middle"; // Default to middle if not specified
+
+    // Apply position styling based on the configuration
+    applyPositionStyling(discountBarElement, barPosition);
 
     // Initialize from session storage
     try {
@@ -78,19 +99,39 @@ document.addEventListener("DOMContentLoaded", function () {
       console.warn("Session storage error:", error);
     }
 
-    // Function to show the appropriate element (popup or discount bar)
-    function showExitIntent() {
-      if (popupShown || triggerCount >= maxTriggers) return;
+    // Function to show the discount bar
+    function showDiscountBar() {
+      if (barShown || triggerCount >= maxTriggers) return;
 
-      console.log("🚀 Showing exit intent with template:", config.popupTemplate);
+      console.log("🚀 Showing discount bar");
+      
+      // Update elements with config values if they exist
+      if (discountCodeElement && config.discountCode) {
+        console.log("Setting discount code to:", config.discountCode);
+        discountCodeElement.textContent = config.discountCode;
+      }
+      
+      if (copyButton && config.buttonText) {
+        console.log("Setting button text to:", config.buttonText);
+        copyButton.textContent = config.buttonText;
+      }
 
       // Show the element
-      activeElement.style.display = config.displayType === "popup" ? "flex" : "block";
-      popupShown = true;
+      discountBarElement.style.display = "block";
+      barShown = true;
 
-      // Start timer if it's a discount bar
-      if (config.displayType === "discount-bar" && timerElement) {
-        startTimer(config.timerDuration);
+      // Start timer
+      if (timerElement) {
+        // Parse the timerDuration from config, with fallback and validation
+        const duration = parseInt(config.timerDuration);
+        console.log(`Config timer duration: ${duration} minutes (${typeof duration})`);
+        
+        if (isNaN(duration) || duration <= 0) {
+          console.warn("Invalid timer duration in config, using default");
+          startTimer(15 * 60); // Default 15 minutes
+        } else {
+          startTimer(duration * 60); // Convert minutes to seconds
+        }
       }
 
       // Track display count
@@ -103,10 +144,10 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
-    // Function to hide the element
-    function hideExitIntent() {
-      if (activeElement) {
-        activeElement.style.display = "none";
+    // Function to hide the discount bar
+    function hideDiscountBar() {
+      if (discountBarElement) {
+        discountBarElement.style.display = "none";
       }
 
       // Clear timer if running
@@ -115,15 +156,21 @@ document.addEventListener("DOMContentLoaded", function () {
         timerInterval = null;
       }
 
-      popupShown = false;
-      console.log("Exit intent hidden");
+      barShown = false;
+      console.log("Discount bar hidden");
     }
 
     // Function to start countdown timer
     function startTimer(seconds) {
       if (!timerElement) return;
 
+      // Make sure we have a valid seconds value
       let remainingTime = seconds;
+      if (isNaN(remainingTime) || remainingTime <= 0) {
+        remainingTime = 60; // Default to 1 minute if invalid
+      }
+      
+      console.log(`Starting timer with ${remainingTime} seconds`);
       updateTimerDisplay(remainingTime);
 
       timerInterval = setInterval(() => {
@@ -131,7 +178,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (remainingTime <= 0) {
           clearInterval(timerInterval);
-          hideExitIntent();
+          console.log("Timer completed, hiding discount bar");
+          hideDiscountBar();
           return;
         }
 
@@ -153,7 +201,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // Only trigger on actual exit intent (mouse leaving at top of window)
       if (event.clientY <= 0) {
         console.log("Exit intent detected (mouse leaving at top)");
-        showExitIntent();
+        showDiscountBar();
 
         // Remove listener if we've reached the max number of displays
         if (triggerCount >= maxTriggers) {
@@ -162,15 +210,99 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
+    // Track scrolling to detect rapid upward scrolls (only if enabled)
+    let lastScrollTop = window.scrollY;
+    let scrollTimeout;
+
+    function handleScroll() {
+      if (!scrollDetectionEnabled) return;
+
+      clearTimeout(scrollTimeout);
+      
+      let currentScrollTop = window.scrollY;
+      let scrollSpeed = lastScrollTop - currentScrollTop;
+
+      // Detect rapid upward scroll
+      if (scrollSpeed > 30) {
+        console.log("Rapid upward scroll detected");
+        showDiscountBar();
+      }
+
+      lastScrollTop = currentScrollTop;
+    }
+
+    // Apply the appropriate positioning styles based on the configuration
+    function applyPositionStyling(element, position) {
+      if (!element) return;
+
+      // Reset existing styles
+      element.style.position = "";
+      element.style.top = "";
+      element.style.bottom = "";
+      element.style.left = "";
+      element.style.transform = "";
+      element.style.width = "";
+      element.style.zIndex = "999999";
+
+      // Apply styles based on position configuration
+      switch (position) {
+        case "top":
+          element.style.position = "fixed";
+          element.style.top = "0";
+          element.style.left = "0";
+          element.style.width = "100%";
+          element.style.transform = "none";
+          element.style.borderRadius = "0";
+          // Make a shadow at the bottom
+          element.querySelector(".discount-bar__content").style.borderRadius = "0";
+          element.querySelector(".discount-bar__content").style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.1)";
+          break;
+        case "bottom":
+          element.style.position = "fixed";
+          element.style.bottom = "0";
+          element.style.left = "0";
+          element.style.width = "100%";
+          element.style.transform = "none";
+          element.style.borderRadius = "0";
+          // Make a shadow at the top
+          element.querySelector(".discount-bar__content").style.borderRadius = "0";
+          element.querySelector(".discount-bar__content").style.boxShadow = "0 -2px 4px rgba(0, 0, 0, 0.1)";
+          break;
+        case "middle":
+        default:
+          // Keep the default centered style
+          element.style.position = "fixed";
+          element.style.top = "50%";
+          element.style.left = "50%";
+          element.style.transform = "translate(-50%, -50%)";
+          element.style.width = "400px";
+          element.style.height = "auto";
+          // Reset border radius to original value
+          element.querySelector(".discount-bar__content").style.borderRadius = "6px";
+          element.querySelector(".discount-bar__content").style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.2)";
+          break;
+      }
+
+      console.log(`Applied position styling: ${position}`);
+    }
+
     // Clean up event listeners
     function cleanupListeners() {
       document.removeEventListener("mouseout", handleExitIntent);
+      window.removeEventListener("scroll", handleScroll);
       console.log("Cleaned up exit intent listeners");
     }
 
     // Add event listeners
     if (triggerCount < maxTriggers) {
       document.addEventListener("mouseout", handleExitIntent);
+      
+      // Only add scroll event listener if enabled
+      if (scrollDetectionEnabled) {
+        window.addEventListener("scroll", handleScroll);
+        console.log("Added scroll detection listener");
+      }
+      
       console.log("Added exit intent listener");
     } else {
       console.log("Max triggers reached, not adding listeners");
@@ -180,42 +312,48 @@ document.addEventListener("DOMContentLoaded", function () {
     closeButtons.forEach(button => {
       button.addEventListener("click", function(e) {
         e.preventDefault();
-        hideExitIntent();
+        hideDiscountBar();
       });
     });
 
-    // Add click outside to close for popup overlay
-    if (popupElement) {
-      popupElement.addEventListener("click", function(event) {
-        if (event.target === popupElement) {
-          hideExitIntent();
+    // Handle copy button functionality
+    const copyButton = document.getElementById('copy-discount-button');
+    const discountCode = document.getElementById('discount-code');
+    
+    if (copyButton && discountCode) {
+      copyButton.addEventListener('click', function() {
+        // Create a temporary input element to copy from
+        const tempInput = document.createElement('input');
+        tempInput.value = discountCode.textContent.trim();
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        
+        try {
+          // Copy the text to clipboard
+          document.execCommand('copy');
+          
+          // Show success state
+          copyButton.textContent = 'Copied!';
+          copyButton.classList.add('copied');
+          
+          // Reset button after 2 seconds
+          setTimeout(() => {
+            copyButton.textContent = 'Copy Code';
+            copyButton.classList.remove('copied');
+          }, 2000);
+          
+          console.log('Discount code copied:', tempInput.value);
+        } catch (err) {
+          console.error('Failed to copy code:', err);
         }
+        
+        // Remove the temporary input
+        document.body.removeChild(tempInput);
       });
+    } else {
+      console.warn('Copy button or discount code element not found');
     }
 
-    // Handle form submissions
-    const forms = document.querySelectorAll(".exit-popup__form");
-    forms.forEach(form => {
-      form.addEventListener("submit", function(e) {
-        e.preventDefault();
-        const emailInput = form.querySelector('input[type="email"]');
-
-        if (emailInput && emailInput.value) {
-          // Here you would typically send the email to your backend
-          console.log("Form submitted with email:", emailInput.value);
-
-          // Show a success message
-          const parentElement = form.closest('.popup-template, .exit-popup--discount, .exit-popup--newsletter, .exit-popup--survey');
-          if (parentElement) {
-            parentElement.innerHTML = '<h2>Thank You!</h2><p>You have been subscribed successfully.</p>';
-          }
-
-          // Hide after a delay
-          setTimeout(hideExitIntent, 3000);
-        }
-      });
-    });
-
-    console.log("✅ Exit Intent Script Initialized Successfully");
-  } // End of initExitIntent function
+    console.log("✅ Exit Intent Discount Bar Script Initialized Successfully");
+  }
 });

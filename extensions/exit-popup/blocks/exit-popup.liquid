@@ -1,147 +1,92 @@
 {% schema %}
 {
-  "name": "Exit Intent Popup",
-  "target": "section",
-  "settings": []
+"name": "Exit Intent Discount Bar",
+"target": "section",
+"javascript": "exit-popup.js",
+"stylesheet": "exit-popup.css",
+"settings": [
+ {
+"type": "text",
+"id": "bar_title",
+"label": "Fallback Title",
+"default": "Special Offer!"
+ },
+ {
+"type": "text",
+"id": "bar_message",
+"label": "Fallback Discount Code",
+"default": "SAVE10"
+ },
+ {
+"type": "color",
+"id": "bar_background",
+"label": "Background Color",
+"default": "#fffae6"
+ }
+ ]
 }
 {% endschema %}
-
 {% assign popup_settings = shop.metafields.exitPopup.settings %}
-
 {% if popup_settings == blank %}
-  <div class="popup-error">
-    <p>Error: Popup settings not found.</p>
-  </div>
+ <script>
+ console.error("Exit popup settings metafield not found!");
+ window.exitIntentConfig = {
+   displayType: "discount-bar",
+   popupFrequency: 1,
+   timerDuration: 15,
+   discountCode: "SAVE10",
+   offerText: "Special Offer!",
+   buttonText: "Copy Code",
+   scrollDetection: true,
+   barPosition: "middle"
+ };
+ </script>
 {% else %}
-  {% comment %}
-  The metafield value is a JSON string that needs to be parsed
-  {% endcomment %}
-
-  {% assign settings_json = popup_settings.value | default: popup_settings %}
-  {% assign settings = settings_json | json_parse %}
-
-  {% comment %}
-  Now access the values directly from the parsed settings object
-  {% endcomment %}
-  {% assign popup_template = settings.popupTemplate | default: "newsletter" %}
-  {% assign popup_frequency = settings.popupFrequency | default: "2" %}
-  {% assign display_type = settings.displayType | default: "popup" %}
-  {% assign timer_duration = settings.timerDuration | default: "15" %}
-  {% assign background_color = settings.backgroundColor | default: "#ffffff" %}
-  {% assign text_color = settings.textColor | default: "#333333" %}
-  {% assign button_color = settings.buttonColor | default: "#4CAF50" %}
-
-  {% comment %}
-  Access the template texts from the correct location in the parsed object
-  {% endcomment %}
-  {% if settings.templateTexts and settings.templateTexts[popup_template] %}
-    {% assign current_heading = settings.templateTexts[popup_template].heading %}
-    {% assign current_subtext = settings.templateTexts[popup_template].subtext %}
-    {% assign current_button_text = settings.templateTexts[popup_template].buttonText %}
-  {% endif %}
-
-  {% if display_type == "popup" %}
-    <!-- Exit Popup -->
-    <div id="exit-popup-overlay" class="exit-popup-overlay" data-template="{{ popup_template }}">
-      <div class="exit-popup-container">
-        {% case popup_template %}
-          {% when "discount" %}
-            {% render 'templates/discount',
-              background_color: background_color,
-              text_color: text_color,
-              button_color: button_color,
-              heading: current_heading,
-              subtext: current_subtext,
-              button_text: current_button_text
-            %}
-          {% when "newsletter" %}
-            {% render 'templates/newsletter',
-              background_color: background_color,
-              text_color: text_color,
-              button_color: button_color,
-              heading: current_heading,
-              subtext: current_subtext,
-              button_text: current_button_text
-            %}
-          {% when "survey" %}
-            {% render 'templates/survey',
-              background_color: background_color,
-              text_color: text_color,
-              button_color: button_color,
-              heading: current_heading,
-              subtext: current_subtext,
-              button_text: current_button_text
-            %}
-          {% else %}
-            <div class="popup-template" style="background-color: {{ background_color }}; color: {{ text_color }};">
-              <button type="button" class="popup-close">&times;</button>
-              <h2>{{ current_heading | default: "Welcome!" }}</h2>
-              <p>{{ current_subtext | default: "Thank you for visiting our store." }}</p>
-              <button type="button" class="pop-button" style="background-color: {{ button_color }};">
-                {{ current_button_text | default: "Continue" }}
-              </button>
-            </div>
-        {% endcase %}
-      </div>
-    </div>
-  {% else %}
-    <!-- Discount Bar - Updated for center position -->
- <!-- Discount Bar - Horizontal layout with 90px max height -->
-<div id="discount-bar" class="discount-bar" style="background-color: {{ background_color }}; color: {{ text_color }};">
-  <div class="discount-bar__content">
-    <button type="button" class="discount-bar__close">&times;</button>
-
-    <div class="discount-bar__timer">
-      <span id="discount-timer">{{ timer_duration }}:00</span>
-    </div>
-
-    <div class="discount-bar__message">
-      {% if current_heading %}
-        {{ current_heading }}
-      {% else %}
-        {% case popup_template %}
-          {% when "discount" %}
-            Limited time offer: 10% off your order!
-          {% when "newsletter" %}
-            Subscribe now for exclusive deals!
-          {% when "survey" %}
-            Take our quick survey before you go!
-          {% else %}
-            Special offer for you!
-        {% endcase %}
-      {% endif %}
-    </div>
-
-    <button type="button" class="discount-bar__button" style="background-color: {{ button_color }};">
-      {% if current_button_text %}
-        {{ current_button_text }}
-      {% else %}
-        {% case popup_template %}
-          {% when "discount" %}
-            Get Discount
-          {% when "newsletter" %}
-            Subscribe
-          {% when "survey" %}
-            Take Survey
-          {% else %}
-            Learn More
-        {% endcase %}
-      {% endif %}
-    </button>
-  </div>
-</div>
-  {% endif %}
-
-  <script>
-    window.exitIntentConfig = {
-      popupFrequency: {{ popup_frequency }},
-      displayType: "{{ display_type }}",
-      timerDuration: {{ timer_duration | times: 60 }}, // Convert to seconds
-      popupTemplate: "{{ popup_template }}"
-    };
-    console.log("Exit Intent Config:", window.exitIntentConfig);
-  </script>
+ {% assign popup_frequency = popup_settings | split: '"popupFrequency":"' | last | split: '"' | first %}
+ {% assign popup_frequency_number = popup_frequency | times: 1 | default: 1 %}
+ {% assign display_type = popup_settings | split: '"displayType":"' | last | split: '"' | first | default: "discount-bar" %}
+ {% assign timer_duration = popup_settings | split: '"timerDuration":"' | last | split: '"' | first | default: "15" %}
+ {% assign timer_duration_number = timer_duration | times: 1 | default: 15 %}
+ {% assign background_color = popup_settings | split: '"backgroundColor":"' | last | split: '"' | first | default: "#ffffff" %}
+ {% assign text_color = popup_settings | split: '"textColor":"' | last | split: '"' | first | default: "#333333" %}
+ {% assign button_color = popup_settings | split: '"buttonColor":"' | last | split: '"' | first | default: "#4CAF50" %}
+ {% assign heading = popup_settings | split: '"heading":"' | last | split: '"' | first | default: "Special Offer!" %}
+ {% assign subtext = popup_settings | split: '"subtext":"' | last | split: '"' | first | default: "SAVE10" %}
+ {% assign button_text = popup_settings | split: '"buttonText":"' | last | split: '"' | first | default: "Copy Code" %}
+ {% assign scroll_detection = popup_settings | split: '"scrollDetection":' | last | split: ',' | first %}
+ {% assign bar_position = popup_settings | split: '"barPosition":"' | last | split: '"' | first | default: "middle" %}
+ <div id="discount-bar-container">
+ <div id="discount-bar" class="discount-bar" style="display: none;">
+ <div class="discount-bar__content" style="background-color: {{ background_color }}; color: {{ text_color }};">
+ <div class="discount-bar__timer">
+ <span id="discount-timer">{{ timer_duration }}:00</span>
+ </div>
+ <div class="discount-bar__message">
+ <h2 style="color: {{ text_color }};" >{{ heading }}</h2>
+ </div>
+ <div class="discount-bar__action">
+ <div class="discount-bar__copy-container">
+ <span id="discount-code" class="discount-bar__code" style="color: {{ text_color }};">{{ subtext }}</span>
+ <button type="button" id="copy-discount-button" class="discount-bar__copy-button" style="background-color: {{ button_color }};">{{ button_text }}</button>
+ </div>
+ </div>
+ <button type="button" class="discount-bar__close" aria-label="Close discount bar">&times;</button>
+ </div>
+ </div>
+ </div>
+ <script>
+ window.exitIntentConfig = {
+   displayType: "discount-bar",
+   popupFrequency: {{ popup_frequency_number }},
+   timerDuration: {{ timer_duration_number }},
+   discountCode: "{{ subtext }}",
+   offerText: "{{ heading }}",
+   buttonText: "{{ button_text }}",
+   scrollDetection: {% if scroll_detection == "false" %}false{% else %}true{% endif %},
+   barPosition: "{{ bar_position }}"
+ };
+ console.log("Exit Intent Config:", window.exitIntentConfig);
+ </script>
 {% endif %}
-
-<script src="{{ 'exit-popup.js' | asset_url }}?v={{ 'now' | date: '%s' }}" defer></script>
-<link rel="stylesheet" href="{{ 'exit-popup.css' | asset_url }}?v={{ 'now' | date: '%s' }}" rel="stylesheet">
+<script src="{{ 'exit-popup.js' | asset_url }}" defer></script>
+<link rel="stylesheet" href="{{ 'exit-popup.css' | asset_url }}">

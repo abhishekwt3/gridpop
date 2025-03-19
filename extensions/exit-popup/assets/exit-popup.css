@@ -1,129 +1,146 @@
-/*
- * Updated Discount Bar CSS with 90px max height
- */
-
-/* Discount Bar Styles - Centered with 40% max width and 90px max height */
+/* Discount Bar Styles */
 .discount-bar {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  max-width: 40%;
-  width: 40%;
-  min-width: 300px;
-  max-height: 90px; /* Enforcing 90px max height */
-  height: auto;
-  border-radius: 8px;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+  width: 400px;
+  height: 70px;
   z-index: 999999;
-  display: none; /* Initially hidden */
-  padding: 12px 20px; /* Reduced padding to fit in 90px height */
-  overflow: hidden;
+  animation: fadeIn 0.5s ease-in-out;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
 }
 
-.discount-bar__content {
-  display: flex;
-  flex-direction: row; /* Changed to row layout for compact height */
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  height: 100%;
-  max-height: 90px;
-}
-
-.discount-bar__timer {
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: 5px 8px;
-  border-radius: 4px;
-  font-weight: bold;
-  min-width: 60px;
-  text-align: center;
-  margin-right: 15px;
-  font-size: 14px;
-}
-
-.discount-bar__message {
-  flex-grow: 1;
-  text-align: center;
-  font-weight: 500;
-  font-size: 16px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.discount-bar__button {
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  margin-left: 15px;
-  white-space: nowrap;
-  font-size: 14px;
-}
-
-.discount-bar__close {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  background: none;
-  border: none;
-  color: inherit;
-  font-size: 20px;
-  cursor: pointer;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Mobile Responsiveness */
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .discount-bar {
-    width: 60%;
-    max-width: 60%;
-  }
-
-  .discount-bar__content {
-    flex-wrap: nowrap;
-  }
-
-  .discount-bar__message {
-    font-size: 14px;
-  }
-
-  .discount-bar__button {
-    padding: 6px 12px;
-    font-size: 13px;
+    width: 300px;
+    height: 80px;
   }
 }
 
 @media (max-width: 480px) {
   .discount-bar {
-    width: 90%;
-    max-width: 90%;
-    min-width: auto;
+    width: 250px;
+    height: 90px;
   }
+}
 
+.discount-bar__content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  position: relative;
+  height: 100%;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+/* Layout of elements in the bar */
+.discount-bar__timer {
+  font-weight: bold;
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-right: 10px;
+}
+
+.discount-bar__message {
+  flex: 1;
+  text-align: center;
+}
+
+.discount-bar__message h2 {
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  white-space: normal;
+}
+
+.discount-bar__action {
+  margin-left: 10px;
+}
+
+.discount-bar__copy-container {
+  display: flex;
+  align-items: center;
+}
+
+.discount-bar__code {
+  font-size: 14px;
+  padding: 6px 10px;
+}
+
+.discount-bar__copy-button {
+  padding: 4px 8px;
+  color: white; /* Default text color for the button */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+  display: inline-block; /* Ensure button is properly displayed */
+  min-width: 70px; /* Minimum width for the button */
+  text-align: center;
+}
+
+.discount-bar__copy-button:hover {
+  opacity: 0.9;
+}
+
+.discount-bar__copy-button.copied {
+  background-color: #4CAF50 !important;
+}
+
+.discount-bar__close {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.discount-bar__close:hover {
+  opacity: 1;
+}
+
+/* For smaller screens, adjust the layout */
+@media (max-width: 480px) {
   .discount-bar__content {
-    flex-wrap: nowrap;
+    flex-direction: column;
+    padding: 8px 10px;
+    justify-content: center;
   }
-
+  
   .discount-bar__message {
-    font-size: 12px;
-    max-width: 40%;
+    margin-bottom: 5px;
   }
-
+  
   .discount-bar__timer {
-    font-size: 12px;
-    padding: 4px 6px;
-    min-width: 50px;
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    margin-right: 0;
   }
+}
 
-  .discount-bar__button {
-    padding: 5px 10px;
-    font-size: 12px;
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
   }
 }

@@ -1,5 +1,5 @@
 import { useLoaderData, useSubmit } from "@remix-run/react";
-import { Page, Layout, Card, Select, Button, Text, ButtonGroup, InlineStack, TextField, Grid, RadioButton, Banner } from "@shopify/polaris";
+import { Page, Layout, Card, Button, Text, ButtonGroup, InlineStack, TextField, Grid, Banner, ChoiceList, Select } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 import { useState, useCallback, useEffect } from "react";
 import { PopupPreview } from "../components/PopupPreview";
@@ -50,29 +50,8 @@ export const loader = async ({ request }) => {
       console.log("No existing metafield found");
     }
 
-    // Default texts for each template type
-    const defaultTexts = {
-      discount: {
-        heading: "Special Offer!",
-        subtext: "Get 10% off your first purchase",
-        buttonText: "Get Discount"
-      },
-      newsletter: {
-        heading: "Stay Updated!",
-        subtext: "Subscribe to our newsletter for exclusive updates",
-        buttonText: "Subscribe"
-      },
-      survey: {
-        heading: "Quick Survey",
-        subtext: "Help us improve your experience",
-        buttonText: "Submit"
-      }
-    };
-
-    // Set default texts if not already in settings
-    if (!settings.templateTexts) {
-      settings.templateTexts = defaultTexts;
-    }
+    // Ensure displayType is set to discount-bar
+    settings.displayType = "discount-bar";
 
     return { shopId, shopUrl, settings };
   } catch (error) {
@@ -113,91 +92,45 @@ export const action = async ({ request }) => {
       throw new Error("Missing shop ID or URL");
     }
 
-    const selectedTemplate = formData.get("popup_template") || "discount";
     const popupFrequency = formData.get("popup_frequency") || "2";
-    const displayType = formData.get("display_type") || "popup";
     const timerDuration = formData.get("timer_duration") || "15";
     const backgroundColor = formData.get("background_color") || "#ffffff";
     const textColor = formData.get("text_color") || "#333333";
     const buttonColor = formData.get("button_color") || "#4CAF50";
+    const scrollDetection = formData.get("scroll_detection") === "true";
+    const barPosition = formData.get("bar_position") || "middle";
 
-    // Get template text values
-    const templateHeading = formData.get("template_heading") || "";
-    const templateSubtext = formData.get("template_subtext") || "";
-    const templateButtonText = formData.get("template_button_text") || "";
-
-    // Build the template texts object
-    // We need to read the existing metafield first to preserve texts for other templates
-    const existingMetafield = await admin.graphql(
-      `#graphql
-      query {
-        shop {
-          metafield(namespace: "exitPopup", key: "settings") {
-            value
-          }
-        }
-      }`
-    );
-
-    const existingData = await existingMetafield.json();
-    let templateTexts = {
-      discount: {
-        heading: "Special Offer!",
-        subtext: "Get 10% off your first purchase",
-        buttonText: "Get Discount"
-      },
-      newsletter: {
-        heading: "Stay Updated!",
-        subtext: "Subscribe to our newsletter for exclusive updates",
-        buttonText: "Subscribe"
-      },
-      survey: {
-        heading: "Quick Survey",
-        subtext: "Help us improve your experience",
-        buttonText: "Submit"
-      }
-    };
-
-    // If we have existing data, parse it
-    if (existingData?.data?.shop?.metafield?.value) {
-      try {
-        const existingSettings = JSON.parse(existingData.data.shop.metafield.value);
-        if (existingSettings.templateTexts) {
-          templateTexts = existingSettings.templateTexts;
-          console.log("Retrieved existing template texts", templateTexts);
-        }
-      } catch (err) {
-        console.error("Error parsing existing metafield:", err);
-      }
-    }
-
-    // Update only the current template's texts
-    templateTexts[selectedTemplate] = {
-      heading: templateHeading,
-      subtext: templateSubtext,
-      buttonText: templateButtonText
-    };
+    // Get text values
+    const heading = formData.get("heading") || "";
+    const subtext = formData.get("subtext") || "";
+    const buttonText = formData.get("button_text") || "";
 
     console.log("Preparing to update metafield with:", {
-      popupTemplate: selectedTemplate,
       popupFrequency,
-      displayType,
+      displayType: "discount-bar", // Always set to discount-bar
       timerDuration,
       backgroundColor,
       textColor,
       buttonColor,
-      templateTexts
+      heading,
+      subtext,
+      buttonText,
+      scrollDetection,
+      barPosition
     });
 
     const settingsValue = JSON.stringify({
-      popupTemplate: selectedTemplate,
       popupFrequency,
-      displayType,
+      displayType: "discount-bar", // Always set to discount-bar
       timerDuration,
       backgroundColor,
       textColor,
       buttonColor,
-      templateTexts
+      heading,
+      subtext,
+      buttonText,
+      scrollDetection,
+      barPosition
     });
 
     console.log("Metafield value to set:", settingsValue);
@@ -247,14 +180,17 @@ export const action = async ({ request }) => {
     return new Response(JSON.stringify({
       success: true,
       settings: {
-        popupTemplate: selectedTemplate,
         popupFrequency,
-        displayType,
+        displayType: "discount-bar",
         timerDuration,
         backgroundColor,
         textColor,
         buttonColor,
-        templateTexts
+        heading,
+        subtext,
+        buttonText,
+        scrollDetection,
+        barPosition
       }
     }), {
       headers: { "Content-Type": "application/json" },
@@ -276,75 +212,36 @@ export default function Settings() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState(loaderError || "");
 
-  // Ensure templateTexts exists with defaults
-  const templateTexts = settings.templateTexts || {
-    discount: { heading: "Special Offer!", subtext: "Get 10% off your first purchase", buttonText: "Get Discount" },
-    newsletter: { heading: "Stay Updated!", subtext: "Subscribe to our newsletter for exclusive updates", buttonText: "Subscribe" },
-    survey: { heading: "Quick Survey", subtext: "Help us improve your experience", buttonText: "Submit" }
-  };
-
-  const [popupTemplate, setPopupTemplate] = useState(settings?.popupTemplate || "discount");
   const [popupFrequency, setPopupFrequency] = useState(settings?.popupFrequency || "1");
-  const [displayType, setDisplayType] = useState(settings?.displayType || "popup");
   const [timerDuration, setTimerDuration] = useState(settings?.timerDuration || "15");
   const [backgroundColor, setBackgroundColor] = useState(settings?.backgroundColor || "#ffffff");
   const [textColor, setTextColor] = useState(settings?.textColor || "#333333");
   const [buttonColor, setButtonColor] = useState(settings?.buttonColor || "#4CAF50");
+  const [scrollDetection, setScrollDetection] = useState(settings?.scrollDetection !== false); // Default to true if not specified
+  const [barPosition, setBarPosition] = useState(settings?.barPosition || "middle");
 
-  // Template text states with safer access to nested properties
-  const [templateHeading, setTemplateHeading] = useState(
-    (templateTexts[popupTemplate]?.heading) ||
-    (popupTemplate === "discount" ? "Special Offer!" :
-     popupTemplate === "newsletter" ? "Stay Updated!" :
-     "Quick Survey")
-  );
-
-  const [templateSubtext, setTemplateSubtext] = useState(
-    (templateTexts[popupTemplate]?.subtext) ||
-    (popupTemplate === "discount" ? "Get 10% off your first purchase" :
-     popupTemplate === "newsletter" ? "Subscribe to our newsletter for exclusive updates" :
-     "Help us improve your experience")
-  );
-
-  const [templateButtonText, setTemplateButtonText] = useState(
-    (templateTexts[popupTemplate]?.buttonText) ||
-    (popupTemplate === "discount" ? "Get Discount" :
-     popupTemplate === "newsletter" ? "Subscribe" :
-     "Submit")
-  );
-
-  const templateOptions = [
-    { label: "Discount Offer", value: "discount" },
-    { label: "Newsletter Signup", value: "newsletter" },
-    { label: "Quick Survey", value: "survey" }
-  ];
+  // Text fields - getting from root level now
+  const [heading, setHeading] = useState(settings?.heading || "Special Offer!");
+  const [subtext, setSubtext] = useState(settings?.subtext || "SAVE10");
+  const [buttonText, setButtonText] = useState(settings?.buttonText || "Copy Code");
 
   const [selectedTab, setSelectedTab] = useState(0);
 
-  // Update text fields when template changes
+  // Position options for the select dropdown
+  const positionOptions = [
+    { label: "Middle (Floating)", value: "middle" },
+    { label: "Top (Sticky)", value: "top" },
+    { label: "Bottom (Sticky)", value: "bottom" }
+  ];
+
+  // Set default text values if needed
   useEffect(() => {
-    if (settings?.templateTexts && settings.templateTexts[popupTemplate]) {
-      const texts = settings.templateTexts[popupTemplate];
-      setTemplateHeading(texts.heading);
-      setTemplateSubtext(texts.subtext);
-      setTemplateButtonText(texts.buttonText);
-    } else {
-      // Set defaults if no custom texts exist
-      if (popupTemplate === "discount") {
-        setTemplateHeading("Special Offer!");
-        setTemplateSubtext("Get 10% off your first purchase");
-        setTemplateButtonText("Get Discount");
-      } else if (popupTemplate === "newsletter") {
-        setTemplateHeading("Stay Updated!");
-        setTemplateSubtext("Subscribe to our newsletter for exclusive updates");
-        setTemplateButtonText("Subscribe");
-      } else if (popupTemplate === "survey") {
-        setTemplateHeading("Quick Survey");
-        setTemplateSubtext("Help us improve your experience");
-        setTemplateButtonText("Submit");
-      }
-    }
-  }, [popupTemplate, settings]);
+    setHeading(settings?.heading || "Special Offer!");
+    setSubtext(settings?.subtext || "SAVE10");
+    setButtonText(settings?.buttonText || "Copy Code");
+    setScrollDetection(settings?.scrollDetection !== false);
+    setBarPosition(settings?.barPosition || "middle");
+  }, [settings]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -363,16 +260,16 @@ export default function Settings() {
 
       formData.set("shopId", shopId);
       formData.set("shopUrl", shopUrl);
-      formData.set("popup_template", popupTemplate);
       formData.set("popup_frequency", popupFrequency);
-      formData.set("display_type", displayType);
       formData.set("timer_duration", timerDuration);
       formData.set("background_color", backgroundColor);
       formData.set("text_color", textColor);
       formData.set("button_color", buttonColor);
-      formData.set("template_heading", templateHeading);
-      formData.set("template_subtext", templateSubtext);
-      formData.set("template_button_text", templateButtonText);
+      formData.set("heading", heading);
+      formData.set("subtext", subtext);
+      formData.set("button_text", buttonText);
+      formData.set("scroll_detection", scrollDetection.toString());
+      formData.set("bar_position", barPosition);
 
       console.log("Submitting form data:", Object.fromEntries(formData));
 
@@ -389,13 +286,14 @@ export default function Settings() {
     }
   };
 
-  const handleDisplayTypeChange = useCallback((value) => setDisplayType(value), []);
   const handleTimerRangeChange = useCallback((value) => setTimerDuration(value), []);
+  const handleScrollDetectionChange = useCallback((value) => setScrollDetection(value[0] === "true"), []);
+  const handleBarPositionChange = useCallback((value) => setBarPosition(value), []);
 
   const tabs = [
-    { id: 0, label: "Templates", content: "Select and customize your popup template" },
+    { id: 0, label: "Content", content: "Customize your discount bar content" },
     { id: 1, label: "Appearance", content: "Customize colors and display options" },
-    { id: 2, label: "Behaviour", content: "Configure when and how the popup appears" }
+    { id: 2, label: "Behaviour", content: "Configure when and how the discount bar appears" }
   ];
 
   if (!shopId || !shopUrl) {
@@ -416,7 +314,7 @@ export default function Settings() {
   }
 
   return (
-    <Page title="Exit Popup Settings">
+    <Page title="Exit Discount Bar Settings">
       <Layout>
         <Layout.Section>
           {successMessage && (
@@ -449,7 +347,7 @@ export default function Settings() {
             {tabs[selectedTab].content}
           </Text>
 
-        {/* Templates Tab */}
+        {/* Content Tab */}
         {selectedTab === 0 && (
             <Grid>
               <Grid.Cell columnSpan={{ xs: 12, sm: 12, md: 6, lg: 6 }}>
@@ -462,119 +360,96 @@ export default function Settings() {
                   >
                     <input type="hidden" name="shopId" value={shopId} />
                     <input type="hidden" name="shopUrl" value={shopUrl} />
-
-                    {/* Display Type Selection */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <Text variant="headingMd" as="h3" fontWeight="semibold">
-                        Choose Display Type
-                      </Text>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px' }}>
-                        <div>
-                          <RadioButton
-                            label="Modal Popup"
-                            helpText="A popup that appears in the center of the screen"
-                            checked={displayType === "popup"}
-                            id="popup"
-                            name="display_type"
-                            value="popup"
-                            onChange={() => handleDisplayTypeChange("popup")}
-                          />
-                        </div>
-                        <div>
-                          <RadioButton
-                            label="Discount Bar"
-                            helpText="A bar that appears at the top of the screen with a countdown timer"
-                            checked={displayType === "discount-bar"}
-                            id="discount-bar"
-                            name="display_type"
-                            value="discount-bar"
-                            onChange={() => handleDisplayTypeChange("discount-bar")}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Template Selection */}
-                    <div style={{ marginBottom: '20px' }}>
-                      <Select
-                        label="Choose Popup Template"
-                        options={templateOptions}
-                        name="popup_template"
-                        value={popupTemplate}
-                        onChange={setPopupTemplate}
-                      />
-                    </div>
+                    <input type="hidden" name="scroll_detection" value={scrollDetection.toString()} />
+                    <input type="hidden" name="bar_position" value={barPosition} />
 
                     {/* Customization Options */}
                     <div style={{ marginTop: '20px' }}>
                       <Text variant="headingMd" as="h3" fontWeight="semibold">
-                        Customize Template Text
+                        Customize Content
                       </Text>
 
                       <div style={{ marginTop: '15px' }}>
                         <TextField
-                          label="Heading"
-                          value={templateHeading}
-                          onChange={setTemplateHeading}
-                          name="template_heading"
+                          label="Offer Text"
+                          value={heading}
+                          onChange={setHeading}
+                          name="heading"
+                          helpText="This text will be displayed on the discount bar"
                         />
                       </div>
 
                       <div style={{ marginTop: '15px' }}>
                         <TextField
-                          label="Subtext"
-                          value={templateSubtext}
-                          onChange={setTemplateSubtext}
-                          name="template_subtext"
-                          multiline={2}
+                          label="Discount Code"
+                          value={subtext}
+                          onChange={setSubtext}
+                          name="subtext"
+                          helpText="This code will be copied when the button is clicked"
                         />
                       </div>
 
                       <div style={{ marginTop: '15px' }}>
                         <TextField
                           label="Button Text"
-                          value={templateButtonText}
-                          onChange={setTemplateButtonText}
-                          name="template_button_text"
+                          value={buttonText}
+                          onChange={setButtonText}
+                          name="button_text"
+                          helpText="Text for the copy button"
                         />
                       </div>
                     </div>
 
-                    {displayType === "discount-bar" && (
-                      <div style={{ marginTop: '20px' }}>
-                        <TextField
-                          label="Timer Duration (minutes)"
-                          type="number"
-                          value={timerDuration}
-                          onChange={setTimerDuration}
-                          min="1"
-                          max="60"
-                          name="timer_duration"
-                          helpText="How long the discount bar will display a countdown timer"
-                        />
-                      </div>
-                    )}
+                    <div style={{ marginTop: '20px' }}>
+                      <TextField
+                        label="Timer Duration (minutes)"
+                        type="number"
+                        value={timerDuration}
+                        onChange={setTimerDuration}
+                        min="1"
+                        max="60"
+                        name="timer_duration"
+                        helpText="How long the discount bar will display a countdown timer"
+                      />
+                    </div>
 
-                    <Button submit primary style={{ marginTop: '20px' }}>Save Settings</Button>
+                    <Button submit primary style={{ 
+                      marginTop: '30px', 
+                      backgroundColor: '#4CAF50', 
+                      borderColor: '#4CAF50',
+                      padding: '10px 20px',
+                      minHeight: '45px'
+                    }}>
+                      Save Settings
+                    </Button>
                   </form>
                 </Card>
               </Grid.Cell>
               <Grid.Cell columnSpan={{ xs: 12, sm: 12, md: 6, lg: 6 }}>
                 <Card sectioned title="Preview">
                   <Text variant="bodyMd" as="p">
-                    This is how your {displayType === "popup" ? "popup" : "discount bar"} will appear to customers
+                    This is how your discount bar will appear to customers
                   </Text>
-                  <div style={{ margin: '20px 0', backgroundColor: '#f4f6f8', padding: '20px', borderRadius: '4px' }}>
+                  <div style={{ 
+                    margin: '20px 0', 
+                    backgroundColor: '#f4f6f8', 
+                    padding: '20px', 
+                    borderRadius: '4px', 
+                    overflow: 'visible',
+                    width: '100%',
+                    boxSizing: 'border-box'
+                  }}>
                     <PopupPreview
-                      template={popupTemplate}
-                      displayType={displayType}
+                      displayType="discount-bar"
                       timerDuration={timerDuration}
                       bgColor={backgroundColor}
                       textColor={textColor}
                       buttonColor={buttonColor}
-                      templateHeading={templateHeading}
-                      templateSubtext={templateSubtext}
-                      templateButtonText={templateButtonText}
+                      heading={heading}
+                      subtext={subtext}
+                      buttonText={buttonText}
+                      barPosition={barPosition}
+                      fullWidth={true}
                     />
                   </div>
                 </Card>
@@ -594,15 +469,31 @@ export default function Settings() {
                   >
                     <input type="hidden" name="shopId" value={shopId} />
                     <input type="hidden" name="shopUrl" value={shopUrl} />
-                    <input type="hidden" name="popup_template" value={popupTemplate} />
                     <input type="hidden" name="popup_frequency" value={popupFrequency} />
-                    <input type="hidden" name="display_type" value={displayType} />
                     <input type="hidden" name="timer_duration" value={timerDuration} />
-                    <input type="hidden" name="template_heading" value={templateHeading} />
-                    <input type="hidden" name="template_subtext" value={templateSubtext} />
-                    <input type="hidden" name="template_button_text" value={templateButtonText} />
+                    <input type="hidden" name="heading" value={heading} />
+                    <input type="hidden" name="subtext" value={subtext} />
+                    <input type="hidden" name="button_text" value={buttonText} />
+                    <input type="hidden" name="scroll_detection" value={scrollDetection.toString()} />
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Bar Position */}
+                      <div style={{ marginBottom: '20px' }}>
+                        <Text variant="headingMd" as="h3" fontWeight="semibold">
+                          Bar Position
+                        </Text>
+                        <div style={{ marginTop: '10px' }}>
+                          <Select
+                            label="Select where to display the discount bar"
+                            options={positionOptions}
+                            onChange={handleBarPositionChange}
+                            value={barPosition}
+                            name="bar_position"
+                            helpText="Choose where to display the discount bar on your store"
+                          />
+                        </div>
+                      </div>
+
                       <div>
                         <Text variant="headingMd" as="h3" fontWeight="semibold">
                           Background Color
@@ -655,27 +546,52 @@ export default function Settings() {
                       </div>
                     </div>
 
-                    <Button submit primary style={{ marginTop: '20px' }}>Save Settings</Button>
+                    <Button submit primary style={{ 
+                      marginTop: '30px', 
+                      backgroundColor: '#4CAF50', 
+                      borderColor: '#4CAF50',
+                      padding: '10px 20px',
+                      minHeight: '45px'
+                    }}>
+                      Save Settings
+                    </Button>
                   </form>
                 </Card>
               </Grid.Cell>
               <Grid.Cell columnSpan={{ xs: 6, sm: 6, md: 6, lg: 6 }}>
                 <Card sectioned title="Preview">
                   <Text variant="bodyMd" as="p">
-                    This is how your {displayType === "popup" ? "popup" : "discount bar"} will appear with the selected colors
+                    This is how your discount bar will appear with the selected colors
                   </Text>
-                  <div style={{ margin: '20px 0', backgroundColor: '#f4f6f8', padding: '20px', borderRadius: '4px' }}>
+                  <div style={{ 
+                    margin: '20px 0', 
+                    backgroundColor: '#f4f6f8', 
+                    padding: '20px', 
+                    borderRadius: '4px', 
+                    overflow: 'visible',
+                    width: '100%',
+                    boxSizing: 'border-box'
+                  }}>
                     <PopupPreview
-                      template={popupTemplate}
-                      displayType={displayType}
+                      displayType="discount-bar"
                       timerDuration={timerDuration}
                       bgColor={backgroundColor}
                       textColor={textColor}
                       buttonColor={buttonColor}
-                      templateHeading={templateHeading}
-                      templateSubtext={templateSubtext}
-                      templateButtonText={templateButtonText}
+                      heading={heading}
+                      subtext={subtext}
+                      buttonText={buttonText}
+                      barPosition={barPosition}
+                      fullWidth={true}
                     />
+                  </div>
+                  <div style={{ marginTop: '15px' }}>
+                    <Text variant="bodyMd" as="p" fontWeight="semibold">
+                      Selected Position: {barPosition === 'middle' ? 'Middle (Floating)' : barPosition === 'top' ? 'Top (Sticky)' : 'Bottom (Sticky)'}
+                    </Text>
+                    <Text variant="bodyMd" as="p" color="subdued">
+                      This preview does not show the actual position. The position will be applied on your storefront.
+                    </Text>
                   </div>
                 </Card>
               </Grid.Cell>
@@ -692,14 +608,13 @@ export default function Settings() {
               >
                 <input type="hidden" name="shopId" value={shopId} />
                 <input type="hidden" name="shopUrl" value={shopUrl} />
-                <input type="hidden" name="popup_template" value={popupTemplate} />
-                <input type="hidden" name="display_type" value={displayType} />
                 <input type="hidden" name="background_color" value={backgroundColor} />
                 <input type="hidden" name="text_color" value={textColor} />
                 <input type="hidden" name="button_color" value={buttonColor} />
-                <input type="hidden" name="template_heading" value={templateHeading} />
-                <input type="hidden" name="template_subtext" value={templateSubtext} />
-                <input type="hidden" name="template_button_text" value={templateButtonText} />
+                <input type="hidden" name="heading" value={heading} />
+                <input type="hidden" name="subtext" value={subtext} />
+                <input type="hidden" name="button_text" value={buttonText} />
+                <input type="hidden" name="bar_position" value={barPosition} />
 
                 <TextField
                   label="Number of Times to Display"
@@ -709,27 +624,48 @@ export default function Settings() {
                   type="number"
                   min="1"
                   max="10"
-                  helpText="How many times the popup or discount bar will appear for each user in a single session."
+                  helpText="How many times the discount bar will appear for each user in a single session."
                 />
 
-                {displayType === "discount-bar" && (
-                  <div style={{ marginTop: '20px' }}>
-                    <Text variant="headingMd" as="h3" fontWeight="semibold">
-                      Timer Duration: {timerDuration} minutes
-                    </Text>
-                    <TextField
-                      label="Countdown Timer"
-                      value={timerDuration}
-                      onChange={setTimerDuration}
-                      min="1"
-                      max="60"
-                      type="range"
-                      name="timer_duration"
-                      helpText="How long the countdown timer will run before the discount bar disappears."
-                    />
-                  </div>
-                )}
-                <Button submit primary style={{ marginTop: '20px' }}>Save Behaviour</Button>
+                <div style={{ marginTop: '20px' }}>
+                  <Text variant="headingMd" as="h3" fontWeight="semibold">
+                    Timer Duration: {timerDuration} minutes
+                  </Text>
+                  <TextField
+                    label="Countdown Timer"
+                    value={timerDuration}
+                    onChange={setTimerDuration}
+                    min="1"
+                    max="60"
+                    type="range"
+                    name="timer_duration"
+                    helpText="How long the countdown timer will run before the discount bar disappears."
+                  />
+                </div>
+
+                <div style={{ marginTop: '20px' }}>
+                  <ChoiceList
+                    title="Rapid Scroll Detection"
+                    choices={[
+                      { label: "Enabled", value: "true" },
+                      { label: "Disabled", value: "false" }
+                    ]}
+                    selected={[scrollDetection.toString()]}
+                    onChange={handleScrollDetectionChange}
+                    name="scroll_detection"
+                    helpText="When enabled, the discount bar will also appear when users scroll up rapidly (indicating they might be about to leave)."
+                  />
+                </div>
+
+                <Button submit primary style={{ 
+                  marginTop: '30px', 
+                  backgroundColor: '#4CAF50', 
+                  borderColor: '#4CAF50',
+                  padding: '10px 20px',
+                  minHeight: '45px'
+                }}>
+                  Save Behaviour
+                </Button>
               </form>
             </Card>
           )}
